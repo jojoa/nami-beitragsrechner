@@ -118,6 +118,19 @@ class NamiAccounting:
                         self._config.get_schnupper_weeks()
                     list_of_members_active_schnupper.append(member)
 
+            if member.correct_eintrittsdatum > tools.monthdelta(self._config.get_key_date_frist_half()) and \
+                    member.correct_eintrittsdatum <= self._config.get_key_date_frist_half():
+                tools.print_info(
+                    'Eintritt in letzten 2 Monate des 1.Halbjahres: ' + combined_name)
+                member.correct_eintrittsdatum = self._config.get_key_date_frist_half() + \
+                    datetime.timedelta(days=1)
+            elif member.correct_eintrittsdatum > tools.monthdelta(self._config.get_key_date_second_half()) and \
+                    member.correct_eintrittsdatum <= self._config.get_key_date_second_half():
+                tools.print_info(
+                    'Eintritt in letzten 2 Monate des 2.Halbjahres: ' + combined_name)
+                member.correct_eintrittsdatum = self._config.get_key_date_second_half() + \
+                    datetime.timedelta(days=1)
+
             # Check for correct IBAN and BIC. The following object instantiations raising a ValueError,
             # if BIC or IBAN is wrong
             try:
@@ -172,6 +185,7 @@ class NamiAccounting:
                 if member.correct_eintrittsdatum > self._config.get_key_date_frist_half() and \
                         member.correct_eintrittsdatum <= self._config.get_key_date_second_half():
                     list_of_members_second_half_of_year.append(member)
+                    continue
             elif b == tools.BookingHalfYear.SECOND:
                 if member.correct_eintrittsdatum > self._config.get_key_date_frist_half() and \
                    member.correct_eintrittsdatum <= self._config.get_key_date_second_half():
