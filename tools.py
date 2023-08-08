@@ -12,12 +12,21 @@ def print_info(text):
     logging.info(text)
 
 
-def replace_umlaute_and_s(s : str) -> str:
+def replace_umlaute_and_s(s: str) -> str:
     s = s.replace('ä', 'ae')
     s = s.replace('ö', 'oe')
     s = s.replace('ü', 'ue')
     s = s.replace('ß', 'ss')
     return s
+
+
+def monthdelta(date):
+    m = (date.month-2)
+    d = min(date.day, [31,
+                       29 if date.year % 4 == 0 and (
+                           not date.year % 100 == 0 or date.year % 400 == 0) else 28,
+                       31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m-1])
+    return date.replace(day=d, month=m)
 
 
 class BookingHalfYear(IntEnum):
@@ -60,6 +69,7 @@ class MembershipFees:
     def get_fee_social_annual(self):
         return self._feeSocial
 
+
 class SepaWrapper:
     def __init__(self, name, iban, bic, id):
         self.name = name
@@ -92,30 +102,34 @@ class Config:
         self._config['Nami Login']['Password'] = password
 
     def get_accounting_year(self):
-        return int(self._config['General']['Accounting Year'])        # Jahr für das die Beiträge eingezogen werden sollen
+        # Jahr für das die Beiträge eingezogen werden sollen
+        return int(self._config['General']['Accounting Year'])
 
     def set_accounting_year(self, year):
         self._config['General']['Accounting Year'] = str(year)
 
     def get_accounting_date(self) -> datetime:
-        return datetime.datetime.strptime(self._config['General']['Booking Date'], '%d.%m.%Y')                # Format in TT.MM.JJJJ. Termin zur SEPA Lastschriftausführung
+        # Format in TT.MM.JJJJ. Termin zur SEPA Lastschriftausführung
+        return datetime.datetime.strptime(self._config['General']['Booking Date'], '%d.%m.%Y')
 
     def get_accounting_date_str(self) -> str:
-        return self._config['General']['Booking Date']               # Format in TT.MM.JJJJ. Termin zur SEPA Lastschriftausführung
+        # Format in TT.MM.JJJJ. Termin zur SEPA Lastschriftausführung
+        return self._config['General']['Booking Date']
 
-    def set_accounting_date(self, date:datetime):
-        self._config['General']['Booking Date'] = date.strftime('%d.%m.%Y')              # Format in TT.MM.JJJJ. Termin zur SEPA Lastschriftausführung
+    def set_accounting_date(self, date: datetime):
+        # Format in TT.MM.JJJJ. Termin zur SEPA Lastschriftausführung
+        self._config['General']['Booking Date'] = date.strftime('%d.%m.%Y')
 
     def get_accounting_halfyear(self) -> BookingHalfYear:
         return BookingHalfYear(int(self._config['General']['Accounting Half-Year']))
 
-    def set_accounting_halfyear(self, period:BookingHalfYear):
+    def set_accounting_halfyear(self, period: BookingHalfYear):
         self._config['General']['Accounting Half-Year'] = str(period)
 
     def get_position_file(self) -> str:
         return self._config['General']['Mandate Path']
 
-    def set_position_file(self, path:str):
+    def set_position_file(self, path: str):
         self._config['General']['Mandate Path'] = path
 
     def get_membership_fees(self) -> MembershipFees:
@@ -124,9 +138,12 @@ class Config:
                               float(self._config['Membership Fee']['Social']))
 
     def set_membership_fees(self, fees: MembershipFees):
-        self._config['Membership Fee']['Full'] = str(fees.get_fee_full_annual())
-        self._config['Membership Fee']['Family'] = str(fees.get_fee_family_annual())
-        self._config['Membership Fee']['Social'] = str(fees.get_fee_social_annual())
+        self._config['Membership Fee']['Full'] = str(
+            fees.get_fee_full_annual())
+        self._config['Membership Fee']['Family'] = str(
+            fees.get_fee_family_annual())
+        self._config['Membership Fee']['Social'] = str(
+            fees.get_fee_social_annual())
 
     def get_key_date_frist_half(self) -> datetime.date:
         # Get the accounting year first
@@ -142,28 +159,28 @@ class Config:
 
     def get_schnupper_weeks(self) -> datetime.timedelta:
         weeks = int(self._config['Key Dates']['Schnupper Weeks'])
-        return datetime.timedelta(weeks = weeks)
+        return datetime.timedelta(weeks=weeks)
 
     def get_datetime_format(self) -> str:
         if (self._config.has_option('General', 'Datetime format')) is True:
             return self._config['General']['Datetime format']
 
-    def set_datetime_format(self, datetimeFormat:str):
+    def set_datetime_format(self, datetimeFormat: str):
         if (self._config.has_option('General', 'Datetime format')) is False:
             self._config.set('General', 'Datetime format')
-        datetimeFormat = datetimeFormat.replace('%', '%%') # Use double percent char to escape the basic inteprolation method of ConfigParser
+        # Use double percent char to escape the basic inteprolation method of ConfigParser
+        datetimeFormat = datetimeFormat.replace('%', '%%')
         self._config['General']['Datetime format'] = datetimeFormat
 
     def get_creditor_id(self) -> SepaWrapper:
         return SepaWrapper(self._config['Creditor ID']['name'], self._config['Creditor ID']['iban'],
                            self._config['Creditor ID']['bic'], self._config['Creditor ID']['id'])
 
-    def set_creditor_id(self, sepa:SepaWrapper):
+    def set_creditor_id(self, sepa: SepaWrapper):
         self._config['Creditor ID']['name'] = sepa.name
         self._config['Creditor ID']['iban'] = sepa.iban
         self._config['Creditor ID']['bic'] = sepa.bic
         self._config['Creditor ID']['id'] = sepa.id
-
 
     def update_config(self):
         if (self._config.has_section('Nami Login')) is False:
@@ -183,11 +200,13 @@ class Config:
             self._config.set('Nami Login', 'password', '')
 
         if (self._config.has_option('General', 'accounting year')) is False:
-            self._config.set('General', 'accounting year', str(datetime.date.today().year))
+            self._config.set('General', 'accounting year',
+                             str(datetime.date.today().year))
         if (self._config.has_option('General', 'accounting half-year')) is False:
             self._config.set('General', 'accounting half-year', '1')
         if (self._config.has_option('General', 'booking date')) is False:
-            self._config.set('General', 'booking date', datetime.date.today().strftime('%d.%m.%Y'))
+            self._config.set('General', 'booking date',
+                             datetime.date.today().strftime('%d.%m.%Y'))
         if (self._config.has_option('General', 'mandate path')) is False:
             self._config.set('General', 'mandate path', '')
         if (self._config.has_option('General', 'datetime format')) is False:
